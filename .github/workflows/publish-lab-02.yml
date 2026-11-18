@@ -1,0 +1,88 @@
+name: publish-lab-02
+
+on:
+  push:
+    paths: ["lab-02/**", ".github/workflows/publish-lab-02.yml"]
+  pull_request:
+    paths: ["lab-02/**", ".github/workflows/publish-lab-02.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-24.04
+    defaults: { run: { working-directory: lab-02 } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            lab-02/requirements.txt
+            lab-02/requirements-dev.txt
+      - run: pip install -r requirements-dev.txt
+      - run: pytest -v
+
+  build:
+    name: docker build
+    needs: test
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: lab-02
+          push: false
+          cache-from: type=gha,scope=lab-02
+          cache-to: type=gha,mode=max,scope=lab-02
+
+  publish:
+    name: publish to GHCR
+    needs: [test, build]
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: lowercase image name
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/catshop-lab-02" >> "$GITHUB_ENV"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE }}
+          flavor: latest=false
+          tags: type=sha,format=long
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+
+      - id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: lab-02
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=lab-02
+
+      - name: digest
+        run: |
+          echo "digest: ${{ steps.push.outputs.digest }}"
+          echo "${IMAGE}@${{ steps.push.outputs.digest }}" | tee -a "$GITHUB_STEP_SUMMARY"

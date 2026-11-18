@@ -1,0 +1,61 @@
+# Git
+.git
+.gitignore
+
+# Python / Flask
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+instance/
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Tests & Coverage
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+tests/
+
+# IDEs & Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Documentation & Logs
+docs/
+*.log
+npm-debug.log
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+README.md
+LICENSE
