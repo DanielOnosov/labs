@@ -1,0 +1,1 @@
+ghcr.io/danielonosov/catshop-lab-02@sha256:f84005bdcf427342816664a8ec57dd92f3aacf99a3e254eb9448fcf9f41c54ea
